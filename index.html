@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <link rel="icon" type="image/jpeg" href="my-logo.jpg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Зелёный маршрут подростка — Самарская область</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f7f2;
+      color: #22331f;
+    }
+
+    header {
+      background: #2e7d32;
+      color: white;
+      padding: 18px 24px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 15px;
+      opacity: 0.9;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      padding: 15px;
+      background: #e8f5e9;
+      border-bottom: 2px solid #c8e6c9;
+    }
+
+    .controls button {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 20px;
+      background: white;
+      color: #2e7d32;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .controls button:hover,
+    .controls button.active {
+      background: #2e7d32;
+      color: white;
+    }
+
+    #map {
+      height: calc(100vh - 145px);
+      min-height: 450px;
+      width: 100%;
+    }
+
+    .leaflet-popup-content {
+      font-family: Arial, sans-serif;
+      min-width: 230px;
+    }
+
+    .place-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #2e7d32;
+      margin-bottom: 5px;
+    }
+
+    .place-type {
+      display: inline-block;
+      background: #c8e6c9;
+      color: #1b5e20;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .place-info {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .eco-tip {
+      margin-top: 8px;
+      padding: 7px;
+      background: #fff8e1;
+      border-left: 3px solid #fbc02d;
+      font-size: 12px;
+    }
+
+    footer {
+      background: #2e7d32;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌿 Зелёный маршрут подростка</h1>
+  <p>Интерактивная карта активного и безопасного отдыха в Самарской области</p>
+</header>
+
+<div class="controls">
+  <button class="active" data-filter="all">Все места</button>
+  <button data-filter="парк">Парки</button>
+  <button data-filter="экотропа">Экотропы</button>
+  <button data-filter="набережная">Набережные</button>
+  <button data-filter="спортплощадка">Спортплощадки</button>
+  <button data-filter="смотровая">Смотровые площадки</button>
+</div>
+
+<div id="map"></div>
+
+<footer>
+  Проект для школьной конференции • Самарская область • Будь внимателен к природе 🌱
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Создаём карту с центром в Самарской области
+  const map = L.map('map').setView([53.10093, 49.95767], 9);
+
+  // Добавляем карту OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // База зелёных мест
+  const places = [
+    {
+      name: "Набережная Волги, Самара",
+      type: "набережная",
+      coords: [53.1938, 50.1103],
+      description: "Популярное место для прогулок, бега, велосипедных поездок и отдыха у Волги.",
+      difficulty: "Лёгкая",
+      eco: "Не оставляй мусор и используй многоразовую бутылку для воды."
+    },
+    {
+      name: "Парк культуры и отдыха им. Горького",
+      type: "парк",
+      coords: [53.1959, 50.1002],
+      description: "Городской парк с прогулочными дорожками, аттракционами и зелёными зонами.",
+      difficulty: "Лёгкая",
+      eco: "Не повреждай деревья и кустарники."
+    },
+    {
+      name: "Струковский сад",
+      type: "парк",
+      coords: [53.1916, 50.1069],
+      description: "Старейший парк Самары рядом с набережной Волги.",
+      difficulty: "Лёгкая",
+      eco: "Не корми птиц хлебом: это может навредить им."
+    },
+    {
+      name: "Экотропа «ЛукАморье»",
+      type: "экотропа",
+      coords: [53.4275, 49.8725],
+      description: "Экологическая тропа на территории национального парка «Самарская Лука». Знакомит с природой и историей края.",
+      difficulty: "Средняя",
+      eco: "Иди только по тропе, чтобы не разрушать почву и растения."
+    },
+    {
+      name: "Молодецкий курган",
+      type: "смотровая",
+      coords: [53.4394, 49.8153],
+      description: "Одна из самых известных природных достопримечательностей Жигулей с панорамой Волги.",
+      difficulty: "Средняя",
+      eco: "Бери воду с собой и не сходи с marked маршрута."
+    },
+    {
+      name: "Ботанический сад Самарского университета",
+      type: "парк",
+      coords: [53.2266, 50.1922],
+      description: "Зелёная территория с коллекцией растений, прогулочными дорожками и учебными экспозициями.",
+      difficulty: "Лёгкая",
+      eco: "Не рви цветы и не собирай растения."
+    },
+    {
+      name: "Парк «Дружбы»",
+      type: "парк",
+      coords: [53.2178, 50.1655],
+      description: "Городской парк для прогулок, спорта и отдыха с друзьями.",
+      difficulty: "Лёгкая",
+      eco: "Выбрасывай мусор только в урны."
+    },
+    {
+      name: "Спортивная площадка «Активный район»",
+      type: "спортплощадка",
+      coords: [53.2050, 50.1500],
+      description: "Пример школьной спортивной площадки: турники, зона для игр и отдыха.",
+      difficulty: "Лёгкая",
+      eco: "После занятий убери за собой спортивный инвентарь и мусор."
+    }
+  ];
+
+  // Цвет маркера зависит от типа места
+  const colors = {
+    "парк": "#2e7d32",
+    "экотропа": "#00695c",
+    "набережная": "#0277bd",
+    "спортплощадка": "#ef6c00",
+    "смотровая": "#6a1b9a"
+  };
+
+  // Создаём маркеры
+  const markers = [];
+
+  places.forEach(place => {
+    const marker = L.circleMarker(place.coords, {
+      radius: 9,
+      color: "#ffffff",
+      weight: 2,
+      fillColor: colors[place.type] || "#2e7d32",
+      fillOpacity: 0.95
+    }).addTo(map);
+
+    marker.bindPopup(`
+      <div class="place-title">${place.name}</div>
+      <span class="place-type">${place.type}</span>
+      <div class="place-info">
+        <b>Сложность:</b> ${place.difficulty}<br>
+        ${place.description}
+      </div>
+      <div class="eco-tip">
+        🌱 <b>Эко-совет:</b> ${place.eco}
+      </div>
+    `);
+
+    marker.placeType = place.type;
+    markers.push(marker);
+  });
+
+  // Фильтр по типу места
+  document.querySelectorAll('.controls button').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+
+      const filter = button.dataset.filter;
+
+      markers.forEach(marker => {
+        if (filter === 'all' || marker.placeType === filter) {
+          marker.addTo(map);
+        } else {
+          map.removeLayer(marker);
+        }
+      });
+    });
+  });
+
+  // Пример зелёного маршрута: Самара — Молодецкий курган
+  const greenRoute = L.polyline([
+    [53.1938, 50.1103], // Набережная Волги
+    [53.2520, 50.0300],
+    [53.3200, 49.9400],
+    [53.4275, 49.8725], // ЛукАморье
+    [53.4394, 49.8153]  // Молодецкий курган
+  ], {
+    color: "#2e7d32",
+    weight: 5,
+    opacity: 0.8,
+    dashArray: "10 8"
+  }).addTo(map);
+
+  greenRoute.bindPopup(`
+    <div class="place-title">Маршрут «Город — Самарская Лука»</div>
+    <div class="place-info">
+      Учебный демонстрационный маршрут.<br>
+      <b>Тип:</b> пеший / экскурсионный<br>
+      <b>Сложность:</b> средняя<br>
+      <b>Совет:</b> выходи в сопровождении взрослых, бери воду и заряженный телефон.
+    </div>
+  `);
+
+  // Легенда карты
+  const legend = L.control({ position: "bottomright" });
+
+  legend.onAdd = function () {
+    const div = L.DomUtil.create('div', 'legend');
+    div.style.background = "white";
+    div.style.padding = "10px 12px";
+    div.style.borderRadius = "8px";
+    div.style.boxShadow = "0 2px 6px rgba(0,0,0,0.25)";
+    div.style.fontSize = "12px";
+
+    div.innerHTML = `
+      <b>Легенда</b><br>
+      <span style="color:#2e7d32;">●</span> Парк<br>
+      <span style="color:#00695c;">●</span> Экотропа<br>
+      <span style="color:#0277bd;">●</span> Набережная<br>
+      <span style="color:#ef6c00;">●</span> Спортплощадка<br>
+      <span style="color:#6a1b9a;">●</span> Смотровая площадка
+    `;
+    return div;
+  };
+
+  legend.addTo(map);
+</script>
+
+</body>
+</html>
