@@ -140,7 +140,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // Создаём карту с центром в Самарской области
-  const map = L.map('map').setView([53.09882, 49.95363], 14);
+  const map = L.map('map', { attributionControl: false }).setView([53.09882, 49.95363], 14);
 
   // Добавляем карту OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
